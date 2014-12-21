@@ -1,0 +1,51 @@
+#!/home/mbrainz/perl/bin/perl -w
+# vi: set ts=4 sw=4 :
+
+use strict;
+
+use AnanovaXMLTV;
+$AnanovaXMLTV::quiet = 1 unless -t STDOUT;
+
+use Date::Calc qw( Today Add_Delta_Days );
+my @today = Today;
+
+my @channels = AnanovaXMLTV->channels;
+@channels = map { $_->[0] } @channels;
+
+my @new;
+
+for my $dayoffset (-1 .. +6)
+{
+	my @then = Add_Delta_Days(@today, $dayoffset);
+
+	my $dir = sprintf "listings/%04d/%02d/%02d", @then;
+	use File::Path qw( mkpath );
+	mkpath($dir);
+	-d($dir) or die "Failed to create $dir";
+
+	for my $chan (@channels)
+	{
+		my $file = sprintf "%s/%s.xml", $dir, $chan;
+		next if -s $file;
+
+		my $content = AnanovaXMLTV->fetch_channel_day_listing(
+			$chan,
+			$dayoffset,
+		);
+
+		use File::Temp qw( tempfile );
+		my ($fh, $name) = tempfile(DIR => "listings", CLEANUP => 1)
+			or die $!;
+		print $fh $content or die $!;
+		close $fh or die $!;
+
+		rename $name, $file or die $!;
+		push @new, $file;
+
+		sleep(int rand 10);
+	}
+}
+
+exec "./WatchForProgrammes2", @new if @new and $ENV{DO_WATCH};
+
+# eof UpdateListings

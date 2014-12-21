@@ -1,0 +1,52 @@
+#!/home/mbrainz/perl/bin/perl -w
+# vi: set ts=4 sw=4 :
+
+use strict;
+
+use XML::LibXML;
+my $p = XML::LibXML->new;
+$p->keep_blanks(0);
+
+for my $file (@ARGV)
+{
+	my $doc = eval { $p->parse_file($file) }
+		or warn("parse $file: $@\n"), next;
+
+	my %tots;
+
+	my $mychannel = "british.eurosport.com";
+
+	for my $prog ($doc->findnodes("/tv/programme[\@channel='$mychannel']"))
+	{
+		my $title = $prog->findvalue("./title");
+
+		my $start = $prog->findvalue('./@start');
+		my $stop = $prog->findvalue('./@stop');
+		my $channel = $prog->findvalue('./@channel');
+
+		if ($stop le $start)
+		{
+			warn "$file: $stop <= $start ($channel)";
+		} else {
+			my $x = str2time($start);
+			my $y = str2time($stop);
+			$tots{$channel} += $y-$x;
+			print "$start to $stop : d=".($y-$x)."\n";
+		}
+	}
+
+	use Data::Dumper;
+	print Data::Dumper->Dump([ \%tots ],[ '*tots' ]);
+}
+
+sub str2time
+{
+	my $str = shift;
+	my ($y, $m, $d, $H, $M, $S) = $str =~ /^(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)$/
+		or die "Bad date/time: $str";
+	require POSIX;
+	my $t = POSIX::mktime($S, $M, $H, $d, $m-1, $y-1900);
+	$t;
+}
+
+# eof WatchForProgrammes.pl

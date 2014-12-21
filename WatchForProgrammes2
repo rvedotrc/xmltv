@@ -1,0 +1,101 @@
+#!/home/mbrainz/perl/bin/perl -w
+# vi: set ts=4 sw=4 :
+
+use strict;
+
+# sub xfrm($) { join " ", (lc shift) =~ /(\w+)/g }
+
+# my @names = `cat watchlist.txt`;
+# @names = map { xfrm $_ } @names;
+# my $things = join "|", @names;
+# my $looking_for_re = qr/\b(?:$things)\b/o;
+# sub looking_for { (xfrm $_[0]) =~ $looking_for_re }
+
+do "watchlist.pl";
+defined &looking_for or die $!||$@;
+
+use XML::LibXML;
+my $p = XML::LibXML->new;
+
+for my $file (@ARGV)
+{
+	check_file($file);
+}
+
+my @found;
+
+sub check_file
+{
+	my $file = shift;
+	print STDERR "Reading $file\n" if -t STDERR;
+	my $doc = $p->parse_file($file);
+	print STDERR "Checking $file\n" if -t STDERR;
+	$| = 1;
+
+	for my $prog ($doc->findnodes("//programme"))
+	{
+		my %i;
+		$i{TITLE}	= $prog->findvalue("./title");
+		$i{SUBTITLE}	= $prog->findvalue("./sub-title");
+		$i{DESC}		= $prog->findvalue("./desc");
+
+		looking_for(\%i) or next;
+
+		my $start = $prog->findvalue('./@start');
+		my $stop = $prog->findvalue('./@stop');
+		my $chan = $prog->findvalue('./@channel');
+
+		push @found, {
+			%i,
+			START	=> $start,
+			STOP	=> $stop,
+			CHAN	=> $chan,
+		};
+	}
+}
+
+@found = sort { $a->{START} cmp $b->{START} } @found;
+
+my $curdate = "";
+
+for my $prog (@found)
+{
+	my $date = substr($prog->{START}, 0, 8);
+	if ($date ne $curdate)
+	{
+		my ($y, $m, $d) = $date =~ /^(\d\d\d\d)(\d\d)(\d\d)/;
+		use Date::Calc qw( Day_of_Week );
+		my $dow = Day_of_Week($y, $m, $d); # 1=Mon 7=Sun
+		$dow = substr "MonTueWedThuFriSatSun", ($dow-1)*3, 3;
+
+		print "\n$dow $y-$m-$d\n";
+		$curdate = $date;
+	}
+
+	printf "\n%4s-%4s  %-20.20s  %s\n",
+		substr($prog->{START}, 8, 4),
+		substr($prog->{STOP}, 8, 4),
+		$prog->{CHAN},
+		$prog->{TITLE},
+		;
+	print "    $prog->{SUBTITLE}\n" if $prog->{SUBTITLE};
+
+	use Text::Wrap;
+	local $Text::Wrap::columns = 72;
+	print wrap('  ', '  ', $prog->{DESC}) if $prog->{DESC};
+
+	print "\n";
+}
+
+print "\n" if @found;
+
+sub datetime_to_text
+{
+	my @v = $_[0] =~ /^(\d\d\d\d)(\d\d)(\d\d) (\d\d)(\d\d)(\d\d)$/x or warn;
+	use Date::Calc qw( Day_of_Week );
+	my $dow = Day_of_Week(@v[0,1,2]); # 1=Mon 7=Sun
+	$dow = substr "MonTueWedThuFriSatSun", ($dow-1)*3, 3;
+	"$dow $v[0]-$v[1]-$v[2] $v[3]:$v[4]";
+}
+
+# eof WatchForProgrammes.pl

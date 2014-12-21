@@ -1,0 +1,5 @@
+#!/bin/sh
+cd `dirname $0`
+rm -rf .cache
+DO_WATCH=1 ./UpdateListings3
+# ./WatchForProgrammes2 `find listings -type f -mtime -1`

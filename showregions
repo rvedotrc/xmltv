@@ -1,0 +1,11 @@
+#!/home/mbrainz/perl/bin/perl -w
+# vi: set ts=4 sw=4 :
+
+use strict;
+
+use AnanovaXMLTV;
+
+my @c = AnanovaXMLTV->regions;
+print "$_->[0]\t$_->[1]\n" for @c;
+
+# eof showregions

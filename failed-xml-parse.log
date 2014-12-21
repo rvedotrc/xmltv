@@ -1,0 +1,9 @@
+@_ = (
+       'bbc1',
+       2004,
+       4,
+       12
+     );
+The error was: [Empty String at AnanovaXMLTV.pm line 224
+]
+The content follows.

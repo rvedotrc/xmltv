@@ -1,0 +1,19 @@
+ea_0	Anglia
+ne_1	Border
+scot_17	Border North
+2	Carlton
+mid_3	Central
+sw_4	Channel
+em_18	East Midlands
+scot_5	Grampian
+nw_6	Granada
+wales_7	HTV Wales
+w_8	HTV West
+london_16	London
+s_9	Meridian
+scot_10	Scottish
+se_15	South East
+ne_11	Tyne Tees
+irish_12	Ulster
+sw_13	Westcountry
+n_14	Yorkshire

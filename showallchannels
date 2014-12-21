@@ -1,0 +1,24 @@
+#!/home/mbrainz/perl/bin/perl -w
+# vi: set ts=4 sw=4 :
+
+use strict;
+
+use AnanovaXMLTV;
+
+my @r = AnanovaXMLTV->regions;
+
+my %c;
+
+for my $r (@r)
+{
+	my @c = AnanovaXMLTV->channels($r->[0]);
+	$c{$_->[0]} = $_->[1]
+		for @c;
+}
+
+for (sort { $a cmp $b } keys %c)
+{
+	print "$_\t$c{$_}\n";
+}
+
+# eof showallchannels

@@ -1,0 +1,34 @@
+#!/home/mbrainz/perl/bin/perl -w
+# vi: set ts=4 sw=4 :
+
+use strict;
+
+use AnanovaXMLTV;
+
+use Date::Calc qw( Today Add_Delta_Days );
+
+my ($date, $channel) = @ARGV;
+
+if ($date =~ /^(-?\d+)$/)
+{
+	$date = [ Add_Delta_Days(Today, $1) ];
+} elsif ($date =~ /^(\d\d\d\d)-(\d\d)-(\d\d)$/) {
+	$date = [ $1, $2, $3 ];
+} else {
+	die;
+}
+
+		my $file = sprintf "listings/%04d-%02d-%02d-%s.xml", @$date, $channel;
+		next if -s $file;
+		my $content = AnanovaXMLTV->channel_day_listing($channel, @$date)
+			or die;
+		
+		use File::Temp qw( tempfile );
+		my ($fh, $name) = tempfile(DIR => "listings", CLEANUP => 1)
+			or die $!;
+		print $fh $content or die $!;
+		close $fh or die $!;
+
+		rename $name, $file or die $!;
+
+# eof GetListings

@@ -1,0 +1,58 @@
+#!/usr/bin/perl -w
+# vi: set ts=4 sw=4 :
+
+use strict;
+
+use Date::Calc qw( Today Add_Delta_Days Delta_Days );
+
+my (@start, @end);
+
+if (@ARGV == 0)
+{
+	@start = @end = Today();
+}
+elsif (@ARGV == 1)
+{
+	@start = @end = read_date_arg();
+}
+elsif (@ARGV == 2)
+{
+	@start = read_date_arg();
+	@end = read_date_arg();
+}
+else
+{
+	die "Usage: $0 [DATE [DATE]]\n";
+}
+
+my $d = Delta_Days(@start, @end);
+die "start > end" if $d < 0;
+
+while ($d >= 0)
+{
+	my $mask = sprintf "listings/%04d/%02d/%02d/*", @start;
+	print $_, "\n" for glob($mask);
+	@start = Add_Delta_Days(@start, 1);
+	--$d;
+}
+
+exit;
+
+sub read_date_arg
+{
+	my $arg = shift(@ARGV);
+	if ($arg =~ /^[+-]?(\d+)$/)
+	{
+		return Add_Delta_Days(Today(), $arg);
+	}
+	elsif ($arg =~ /^(\d\d\d\d)-(\d\d)-(\d\d)$/)
+	{
+		return ($1, $2, $3);
+	}
+	else
+	{
+		die "Invalid date '$arg'\n";
+	}
+}
+
+# eof
